@@ -2,7 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>RogueRacer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=Barlow:wght@400;500;600;700;800&display=swap" />
@@ -130,7 +132,65 @@
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     @media (max-width: 560px) { .opt { grid-template-columns: 1fr; } .opt .v { grid-column: 1; } }
     .controls { display: grid; grid-template-columns: auto auto auto auto; gap: 6px 14px; justify-content: center; text-align: left; font-size: 14px; color: var(--muted); margin: 16px auto; }
+    /* ---------- telas de toque ---------- */
+    .touch-only { display: none; }
+    .actions [data-key] { cursor: pointer; }
+    .touch .touch-only { display: initial; }
+    .touch p.touch-only { display: block; }
+    .touch .kbd-only, .touch .controls, .touch .actions span:not([data-key]):not(.touch-only) { display: none; }
+    .touch kbd { display: none; }
+    .touch .actions [data-key] { padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: #ffffff10; color: var(--text); }
+    .touch body { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+    .touch .mrow kbd { display: none; }
+    #touch { display: none; position: fixed; inset: 0; pointer-events: none; z-index: 5; -webkit-user-select: none; user-select: none; }
+    .touch.racing #touch { display: block; }
+    #touch button { position: absolute; pointer-events: auto; touch-action: none; -webkit-tap-highlight-color: transparent;
+      border: 2px solid #ffffff38; background: #0d0f1488; color: #fff; border-radius: 20px; font: 700 14px var(--body); letter-spacing: 1px; }
+    #touch button.on { background: #ffcf3d55; border-color: var(--accent); }
+    #touch .t-left, #touch .t-right { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: 92px; height: 92px; font-size: 30px; }
+    #touch .t-left { left: calc(14px + env(safe-area-inset-left, 0px)); }
+    #touch .t-right { left: calc(118px + env(safe-area-inset-left, 0px)); }
+    #touch .t-gas { right: calc(14px + env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: 112px; height: 124px; border-color: #4ade8099; }
+    #touch .t-brake { right: calc(138px + env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: 88px; height: 88px; border-color: #e5484d99; }
+    #touch .t-nitro { right: calc(138px + env(safe-area-inset-right, 0px)); bottom: calc(118px + env(safe-area-inset-bottom, 0px)); width: 88px; height: 48px; border-color: #4fd2ff99; font-size: 12px; }
+    #touch .t-pause, #touch .t-reset { top: calc(116px + env(safe-area-inset-top, 0px)); width: 48px; height: 44px; font-size: 18px; border-radius: 12px; }
+    #touch .t-pause { right: calc(8px + env(safe-area-inset-right, 0px)); }
+    #touch .t-reset { right: calc(62px + env(safe-area-inset-right, 0px)); }
+    .touch #hud-tl { top: calc(8px + env(safe-area-inset-top, 0px)); left: calc(8px + env(safe-area-inset-left, 0px)); min-width: 0; padding: 6px 10px; gap: 2px; }
+    .touch #hud-tl .big { font-size: 24px; }
+    .touch #hud-tl .row:nth-child(n + 3) { display: none; }
+    .touch #hud-br, .touch #hud-bl .tire { display: none; }
+    .touch #hud-bl { top: calc(8px + env(safe-area-inset-top, 0px)); bottom: auto; left: 50%; transform: translateX(-50%); min-width: 0;
+      display: flex; align-items: center; gap: 12px; padding: 6px 12px; }
+    .touch #speed { font-size: 24px; white-space: nowrap; }
+    .touch #hud-bl .label { margin-top: 0; gap: 6px; }
+    .touch #draft { width: 64px; }
+    .touch #draft .bar { margin-top: 2px; }
+    .touch #hud-tr { top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); padding: 4px; }
+    .touch #minimap { width: 96px; height: 96px; }
+    .touch #center-msg { font-size: 40px; top: 30%; }
+    .touch #center-msg small { font-size: 16px; }
+    .touch #screen { padding: 12px calc(12px + env(safe-area-inset-right, 0px)) 12px calc(12px + env(safe-area-inset-left, 0px)); }
+    #rotate { display: none; }
+    @media (orientation: portrait) {
+      .touch:not(.portrait-ok) #rotate { display: flex; position: fixed; inset: 0; z-index: 20; background: var(--bg); align-items: center; justify-content: center; text-align: center; padding: 24px; }
+    }
+    @media (max-height: 500px) {
+      h1 { font-size: 34px; } h2 { font-size: 22px; }
+      .cards { gap: 10px; margin: 12px 0; } .card { padding: 12px; } .card .desc { margin-top: 6px; }
+      .card.sel { transform: none; }
+    }
     @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } h1 { font-size: 36px; } #minimap { width: 120px; height: 120px; } }
+    /* celular deitado: três bônus lado a lado e botão de seguir sempre à vista */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .cards { grid-template-columns: repeat(3, 1fr); }
+      .card .name { font-size: 16px; } .card .desc { font-size: 13px; }
+      .mrow { padding: 6px 12px; }
+      .mrow[data-row="go"] { position: sticky; bottom: 0; background: #1a1d16; z-index: 1; }
+      .mrow[data-row="go"] .mode span { display: none; }
+      .mrow[data-row="go"] .mode b { font-size: 20px; }
+      .controls { margin: 8px auto; }
+    }
   </style>
 </head>
 <body>
@@ -146,14 +206,26 @@
     <div id="hud-tr" class="hud panel"><canvas id="minimap" width="400" height="400"></canvas></div>
     <div id="hud-bl" class="hud panel">
       <div id="speed">0 <small>km/h</small></div>
-      <div class="label"><span>Pneus</span><span id="tirepct">100%</span></div>
-      <div class="bar"><i id="tirebar"></i></div>
+      <div class="label tire"><span>Pneus</span><span id="tirepct">100%</span></div>
+      <div class="bar tire"><i id="tirebar"></i></div>
       <div class="label"><span>Nitro <kbd>Shift</kbd></span><span id="nitro"></span></div>
       <div id="draft"><div class="label"><span>Vácuo</span></div><div class="bar"><i id="draftbar"></i></div></div>
     </div>
     <div id="hud-br" class="hud panel"></div>
     <div id="center-msg" class="hud"></div>
   </div>
+
+  <!-- controles na tela (só em telas de toque) -->
+  <div id="touch">
+    <button data-k="ArrowLeft" class="t-left" aria-label="Virar à esquerda">◀</button>
+    <button data-k="ArrowRight" class="t-right" aria-label="Virar à direita">▶</button>
+    <button data-k="ShiftLeft" class="t-nitro">NITRO</button>
+    <button data-k="ArrowDown" class="t-brake">FREIO</button>
+    <button data-k="ArrowUp" class="t-gas">ACELERAR</button>
+    <button data-k="Escape" class="t-pause" aria-label="Pausa">❚❚</button>
+    <button data-k="KeyR" class="t-reset" aria-label="Voltar para a pista">↺</button>
+  </div>
+  <div id="rotate"><div><h2>Gire o celular</h2><p class="sub">O RogueRacer fica melhor com o celular deitado.</p><button class="chip on">Jogar assim mesmo</button></div></div>
 
   <div id="screen" class="show"><div class="box"><h2>Carregando o jogo…</h2></div></div>
 

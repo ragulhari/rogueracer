@@ -21,6 +21,9 @@ const CAR_PALETTE = [
 const hexCss = (h) => '#' + h.toString(16).padStart(6, '0');
 // ?autopilot na URL: a IA dirige o seu carro (útil para testar e para demonstração)
 const AUTOPILOT = new URLSearchParams(location.search).has('autopilot');
+// Tela de toque (celular/tablet) ou ?touch na URL: botões na tela, HUD enxuta e gráficos mais leves
+const TOUCH = matchMedia('(pointer: coarse)').matches || new URLSearchParams(location.search).has('touch');
+if (TOUCH) document.documentElement.classList.add('touch');
 const AI_NAMES = ['Vespa', 'Faísca', 'Trovão', 'Corisco', 'Bala', 'Cometa', 'Furacão', 'Relâmpago', 'Tufão', 'Ciclone',
   'Pantera', 'Falcão', 'Tornado', 'Raio', 'Gavião', 'Turbina', 'Bólido', 'Zênite', 'Fagulha', 'Meteoro'];
 
@@ -37,16 +40,16 @@ try {
   window.__started = true;
   throw e;
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, TOUCH ? 1.5 : 2));
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = TOUCH ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 1, 2000);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x445533, 1.6);
 scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 2.2);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.mapSize.set(TOUCH ? 1024 : 2048, TOUCH ? 1024 : 2048);
 Object.assign(sun.shadow.camera, { left: -90, right: 90, top: 90, bottom: -90, near: 10, far: 300 });
 scene.add(sun, sun.target);
 const skids = new SkidMarks(scene);
@@ -75,6 +78,41 @@ window.addEventListener('keyup', (e) => keys.delete(e.code));
 window.addEventListener('blur', () => keys.clear());
 const down = (...codes) => codes.some((c) => keys.has(c));
 const hit = (...codes) => codes.some((c) => pressed.has(c));
+
+// Botões na tela: cada dedo segura uma tecla virtual; arrastar o dedo de um botão para outro troca a tecla.
+function setupTouchPad() {
+  const pad = document.getElementById('touch');
+  const owned = new Map(); // dedo -> tecla
+  const codeAt = (x, y) => document.elementFromPoint(x, y)?.closest?.('#touch [data-k]')?.dataset.k || null;
+  const refresh = () => {
+    const held = new Set(owned.values());
+    pad.querySelectorAll('[data-k]').forEach((b) => b.classList.toggle('on', held.has(b.dataset.k)));
+  };
+  const assign = (id, code) => {
+    const prev = owned.get(id) || null;
+    if (prev === code) return;
+    owned.delete(id);
+    if (prev && ![...owned.values()].includes(prev)) keys.delete(prev);
+    if (code) { owned.set(id, code); keys.add(code); pressed.add(code); }
+    refresh();
+  };
+  pad.addEventListener('pointerdown', (e) => {
+    const code = e.target.closest('[data-k]')?.dataset.k;
+    if (!code) return;
+    e.preventDefault();
+    e.target.setPointerCapture?.(e.pointerId);
+    engine.unlock();
+    // pausa e "voltar para a pista" são toques únicos; os outros ficam apertados enquanto o dedo estiver em cima
+    if (code === 'Escape' || code === 'KeyR') { pressed.add(code); return; }
+    assign(e.pointerId, code);
+  });
+  pad.addEventListener('pointermove', (e) => { if (owned.has(e.pointerId)) assign(e.pointerId, codeAt(e.clientX, e.clientY)); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) pad.addEventListener(ev, (e) => assign(e.pointerId, null));
+  pad.addEventListener('contextmenu', (e) => e.preventDefault());
+  const rot = document.getElementById('rotate');
+  rot.querySelector('button').addEventListener('click', () => document.documentElement.classList.add('portrait-ok'));
+}
+if (TOUCH) setupTouchPad();
 
 // ---------- Estado ----------
 const engine = new Engine();
@@ -195,14 +233,14 @@ function renderTitle() {
   showScreen(`
     <div class="box">
       <h1>ROGUE<span>RACER</span></h1>
-      <p class="sub">Se as teclas não responderem, clique na tela.</p>
+      <p class="sub kbd-only">Se as teclas não responderem, clique na tela.</p>
       <div class="menu">
         ${row('career', `<div class="mode"><b>Carreira</b><span>Todas as pistas em sequência. Vença para avançar; perdeu, repete a pista com outros bônus.</span>
           <span class="meta">${started ? 'Continuar' : 'Começar'}: pista ${save.trackLevel}, ${careerTrack.name} · tentativa ${save.attempt} · piloto nível ${dr.level}</span>
           <div class="xpbar small"><i style="width:${pct}%"></i></div></div><kbd>1</kbd>`)}
         ${row('free', `<div class="mode"><b>Corrida livre</b><span>Escolha a pista, incluindo Monaque e Interlakes. Ganha XP, mas não muda a carreira.</span></div><kbd>2</kbd>`)}
       </div>
-      <div class="actions"><span><kbd>↑</kbd> <kbd>↓</kbd> escolher</span><span><kbd>Enter</kbd> confirmar</span></div>
+      <div class="actions"><span><kbd>↑</kbd> <kbd>↓</kbd> escolher</span><span><kbd>Enter</kbd> confirmar</span><span class="touch-only">Toque num modo para começar</span></div>
     </div>`);
   screenEl.querySelectorAll('[data-row]').forEach((el) => el.addEventListener('click', () => {
     g.menuSel = TITLE_ROWS.indexOf(el.dataset.row);
@@ -261,7 +299,8 @@ function renderSetup() {
         <span><kbd>C</kbd></span><span>Câmera fixa / girando</span>
         <span><kbd>M</kbd></span><span>Silenciar na corrida</span>
       </div>
-      <div class="actions"><span><kbd>↑</kbd> <kbd>↓</kbd> escolher</span><span><kbd>←</kbd> <kbd>→</kbd> mudar opção</span><span><kbd>Enter</kbd> seguir</span><span><kbd>Esc</kbd> voltar</span></div>
+      <p class="sub touch-only">Na corrida: <b>◀ ▶</b> viram, <b>ACELERAR</b> e <b>FREIO</b> ficam à direita, <b>NITRO</b> quando tiver, <b>❚❚</b> pausa e <b>↺</b> volta para a pista. Fique logo atrás de outro carro para pegar o vácuo.</p>
+      <div class="actions"><span><kbd>↑</kbd> <kbd>↓</kbd> escolher</span><span><kbd>←</kbd> <kbd>→</kbd> mudar opção</span><span data-key="Enter"><kbd>Enter</kbd> seguir</span><span data-key="Escape"><kbd>Esc</kbd> voltar</span></div>
     </div>`);
   screenEl.querySelectorAll('[data-row]').forEach((el) => el.addEventListener('click', () => {
     g.setupSel = SETUP_ROWS.indexOf(el.dataset.row);
@@ -406,7 +445,7 @@ function renderTrackSelect() {
       <h2>Corrida livre</h2>
       <p class="sub">Escolha a pista. Dificuldade ${diff().name}. Você ganha XP, mas a carreira não muda.</p>
       <div class="tracks">${cards}</div>
-      <div class="actions"><span><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> escolher</span><span><kbd>Enter</kbd> correr</span><span><kbd>Esc</kbd> Menu</span></div>
+      <div class="actions"><span><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> escolher</span><span><kbd>Enter</kbd> correr</span><span class="touch-only">Toque numa pista para correr</span><span data-key="Escape"><kbd>Esc</kbd> Voltar</span></div>
     </div>`);
   screenEl.querySelectorAll('[data-t]').forEach((el) => el.addEventListener('click', () => { g.trackSel = +el.dataset.t; pickFreeTrack(); }));
   screenEl.querySelectorAll('canvas[data-prev]').forEach((cv) => drawTrackPreview(cv, freeTrack(cv.dataset.prev)));
@@ -494,7 +533,7 @@ function renderDraft() {
       ${easeTxt}
       <h2 style="font-size:22px">Escolha um bônus para esta tentativa</h2>
       <div class="cards">${cards}</div>
-      <div class="actions"><span><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> ou <kbd>←</kbd> <kbd>→</kbd> + <kbd>Enter</kbd> para escolher</span><span><kbd>Esc</kbd> ${freeRace() ? 'Trocar de pista' : 'Menu'}</span></div>
+      <div class="actions"><span><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> ou <kbd>←</kbd> <kbd>→</kbd> + <kbd>Enter</kbd> para escolher</span><span class="touch-only">Toque num bônus para escolher</span><span data-key="Escape"><kbd>Esc</kbd> ${freeRace() ? 'Trocar de pista' : 'Menu'}</span></div>
     </div>`);
   screenEl.querySelectorAll('.card').forEach((el) => {
     el.addEventListener('click', () => pickOffer(Number(el.dataset.i)));
@@ -720,7 +759,7 @@ function showResults() {
       <table class="xp">${xpRows}</table>
       ${r.gained ? `<div class="levelup">Piloto subiu para o nível ${save.driver.level}! Carro mais rápido e mais fácil de controlar.</div>` : ''}
       ${driverPanel()}
-      <div class="actions"><span><kbd>Enter</kbd> ${r.free ? 'Correr de novo nesta pista' : r.won ? 'Próxima pista' : 'Tentar de novo'}</span><span><kbd>Esc</kbd> ${r.free ? 'Trocar de pista' : 'Menu'}</span></div>
+      <div class="actions"><span data-key="Enter"><kbd>Enter</kbd> ${r.free ? 'Correr de novo nesta pista' : r.won ? 'Próxima pista' : 'Tentar de novo'}</span><span data-key="Escape"><kbd>Esc</kbd> ${r.free ? 'Trocar de pista' : 'Menu'}</span></div>
     </div>`);
 }
 
@@ -730,7 +769,7 @@ function showPause() {
   showScreen(`
     <div class="box">
       <h1>PAUSA</h1>
-      <div class="actions"><span><kbd>Esc</kbd> Continuar</span><span><kbd>R</kbd> Reiniciar a corrida</span><span><kbd>Q</kbd> Desistir (conta como derrota)</span></div>
+      <div class="actions"><span data-key="Escape"><kbd>Esc</kbd> Continuar</span><span data-key="KeyR"><kbd>R</kbd> Reiniciar a corrida</span><span data-key="KeyQ"><kbd>Q</kbd> Desistir (conta como derrota)</span><span data-key="KeyM" class="touch-only">Som liga/desliga</span></div>
     </div>`);
 }
 
@@ -987,9 +1026,16 @@ function frame(now) {
   }
   engine.update(g.state === 'race' || g.state === 'countdown' ? g.player : null, dt);
   renderer.render(scene, camera);
+  document.documentElement.classList.toggle('racing', g.state === 'race' || g.state === 'countdown');
   pressed.clear();
   requestAnimationFrame(frame);
 }
+
+// botões das telas (Enter, Esc, R...) também funcionam com clique ou toque
+screenEl.addEventListener('click', (e) => {
+  const k = e.target.closest('[data-key]');
+  if (k) { pressed.add(k.dataset.key); engine.unlock(); }
+});
 
 showMenu();
 window.__started = true;

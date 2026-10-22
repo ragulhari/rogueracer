@@ -48,6 +48,7 @@ A cada push na branch principal a Netlify publica de novo sozinha.
 - Sem freio de mão (carro de Fórmula). Andar logo atrás e alinhado com outro carro dá vácuo: menos arrasto e um pouco mais de velocidade. Bônus de vácuo: Asa de baixo arrasto (2× mais forte), Sensor de esteira (alcance +70%) e Recuperação no vácuo (o vácuo recarrega o nitro).
 - Grid de 20 carros (`src/grid.js`). Você larga em 8º no Normal (6º no Fácil, 10º no Difícil, 12º no Insano) e sobe duas posições a cada nova tentativa. A IA desvia, ultrapassa pelo lado com mais espaço e espera atrás quando não cabe.
 - Pinturas com cor principal, cor secundária e 6 desenhos (`src/livery.js`), escolhidos no menu inicial com prévia. Os adversários recebem combinações sorteadas sem repetir.
+- Celular e tablet (tela de toque, ou `?touch` na URL): botões na tela (◀ ▶, ACELERAR, FREIO, NITRO, pausa e voltar para a pista), menus por toque, HUD enxuta, aviso para deitar o celular e sombras/resolução mais leves.
 
 ## Estrutura
 
