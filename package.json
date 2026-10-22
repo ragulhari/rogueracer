@@ -1,5 +1,5 @@
 {
-  "name": "racing-roguelike",
+  "name": "rogueracer",
   "version": "1.0.0",
   "description": "Roguelike de corrida com visão aérea em Three.js",
   "scripts": {

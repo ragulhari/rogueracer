@@ -1,4 +1,4 @@
-# Racing Roguelike
+# RogueRacer
 
 Jogo de corrida com visão aérea feito com Three.js + Vite.
 

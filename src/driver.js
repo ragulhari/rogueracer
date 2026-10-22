@@ -80,7 +80,8 @@ export function addXp(driver, amount) {
   return levelsGained;
 }
 
-const SAVE_KEY = 'racing-roguelike-save-v1';
+const SAVE_KEY = 'rogueracer-save-v1';
+const OLD_SAVE_KEY = 'racing-roguelike-save-v1'; // nome antigo do jogo: o progresso é migrado na primeira abertura
 
 export function defaultSave() {
   return { driver: { level: 1, xp: 0 }, trackLevel: 1, attempt: 1, best: {}, lastOffers: [], color: 0, color2: 9, livery: 1, difficulty: 'normal', volume: 2 };
@@ -88,7 +89,7 @@ export function defaultSave() {
 
 export function loadSave() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(SAVE_KEY) ?? localStorage.getItem(OLD_SAVE_KEY);
     if (raw) return { ...defaultSave(), ...JSON.parse(raw) };
   } catch (e) { /* sem armazenamento disponível */ }
   return defaultSave();
@@ -99,5 +100,5 @@ export function writeSave(save) {
 }
 
 export function clearSave() {
-  try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignora */ }
+  try { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(OLD_SAVE_KEY); } catch (e) { /* ignora */ }
 }

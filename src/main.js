@@ -194,7 +194,7 @@ function renderTitle() {
   const row = (id, inner) => `<div class="mrow ${TITLE_ROWS[g.menuSel] === id ? 'sel' : ''}" data-row="${id}">${inner}</div>`;
   showScreen(`
     <div class="box">
-      <h1>RACING <span>ROGUELIKE</span></h1>
+      <h1>ROGUE<span>RACER</span></h1>
       <p class="sub">Se as teclas não responderem, clique na tela.</p>
       <div class="menu">
         ${row('career', `<div class="mode"><b>Carreira</b><span>Todas as pistas em sequência. Vença para avançar; perdeu, repete a pista com outros bônus.</span>
