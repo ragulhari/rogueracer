@@ -1,0 +1,13 @@
+# Deploy na Netlify: instala as dependências, gera o jogo com o Vite e publica a pasta dist.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Arquivos com hash no nome podem ficar em cache por um ano; o index.html sempre é buscado de novo.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
